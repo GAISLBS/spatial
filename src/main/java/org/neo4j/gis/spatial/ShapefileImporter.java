@@ -46,6 +46,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -280,7 +281,7 @@ public class ShapefileImporter implements Constants {
             commitInterval = Integer.parseInt(args[4]);
         }
 
-        DatabaseManagementService databases = new DatabaseManagementServiceBuilder(new File(neoPath)).build();
+        DatabaseManagementService databases = new DatabaseManagementServiceBuilder(Paths.get(neoPath)).build();
         GraphDatabaseService db = databases.database(database);
         try {
             ShapefileImporter importer = new ShapefileImporter(db, new NullListener(), commitInterval);

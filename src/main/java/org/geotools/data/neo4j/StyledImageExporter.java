@@ -50,6 +50,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 
 import static java.awt.RenderingHints.*;
 import static java.util.Arrays.asList;
@@ -426,7 +427,7 @@ public class StyledImageExporter {
 		String exportdir = args[2];
 		String stylefile = args[3];
 		double zoom = new Double(args[3]);
-		DatabaseManagementService databases = new DatabaseManagementServiceBuilder(new File(homeDir)).build();
+		DatabaseManagementService databases = new DatabaseManagementServiceBuilder(Paths.get(homeDir)).build();
 		GraphDatabaseService db = databases.database(database);
 		try {
 			StyledImageExporter imageExporter = new StyledImageExporter(db);

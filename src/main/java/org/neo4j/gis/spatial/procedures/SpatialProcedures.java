@@ -52,8 +52,8 @@ import org.neo4j.internal.kernel.api.security.SecurityContext;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.api.procedure.GlobalProcedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
+import org.neo4j.logging.Level;
 import org.neo4j.logging.Log;
-import org.neo4j.logging.Logger;
 import org.neo4j.procedure.*;
 import org.opengis.referencing.ReferenceIdentifier;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -550,7 +550,7 @@ public class SpatialProcedures {
     @Description("Removes the given layer")
     public void removeLayer(@Name("name") String name) {
         SpatialDatabaseService sdb = spatial();
-        sdb.deleteLayer(tx, name, new ProgressLoggingListener("Deleting layer '" + name + "'", log.infoLogger()));
+        sdb.deleteLayer(tx, name, new ProgressLoggingListener("Deleting layer '" + name + "'", log, Level.INFO));
     }
 
     @Procedure(value="spatial.addNode", mode=WRITE)
@@ -671,7 +671,7 @@ public class SpatialProcedures {
             shpPath = shpPath.substring(0, shpPath.lastIndexOf("."));
         }
 
-        ShapefileImporter importer = new ShapefileImporter(db, new ProgressLoggingListener("Importing " + shpPath, log.debugLogger()), commitInterval);
+        ShapefileImporter importer = new ShapefileImporter(db, new ProgressLoggingListener("Importing " + shpPath, log, Level.DEBUG), commitInterval);
         if (layer == null) {
             String layerName = shpPath.substring(shpPath.lastIndexOf(File.separator) + 1);
             return importer.importFile(shpPath, layerName);
@@ -708,7 +708,7 @@ public class SpatialProcedures {
             // add extension
             osmPath = osmPath + ".osm";
         }
-        OSMImportRunner runner = new OSMImportRunner(api, ktx.securityContext(), osmPath, layerName, layerMaker, log.debugLogger());
+        OSMImportRunner runner = new OSMImportRunner(api, ktx.securityContext(), osmPath, layerName, layerMaker, log);
         Thread importerThread = new Thread(runner);
         importerThread.start();
         importerThread.join();
@@ -720,12 +720,12 @@ public class SpatialProcedures {
         private final String osmPath;
         private final String layerName;
         private final BiFunction<Transaction, String, OSMLayer> layerMaker;
-        private final Logger log;
+        private final Log log;
         private final SecurityContext securityContext;
         private Exception e;
         private long rc = -1;
 
-        OSMImportRunner(GraphDatabaseAPI db, SecurityContext securityContext, String osmPath, String layerName, BiFunction<Transaction, String, OSMLayer> layerMaker, Logger log) {
+        OSMImportRunner(GraphDatabaseAPI db, SecurityContext securityContext, String osmPath, String layerName, BiFunction<Transaction, String, OSMLayer> layerMaker, Log log) {
             this.db = db;
             this.osmPath = osmPath;
             this.layerName = layerName;
@@ -750,7 +750,7 @@ public class SpatialProcedures {
                 layerMaker.apply(tx, layerName);
                 tx.commit();
             }
-            OSMImporter importer = new OSMImporter(layerName, new ProgressLoggingListener("Importing " + osmPath, log));
+            OSMImporter importer = new OSMImporter(layerName, new ProgressLoggingListener("Importing " + osmPath, log, Level.DEBUG));
             try {
                 // Provide the security context for all inner transactions that will be made during import
                 importer.setSecurityContext(securityContext);
@@ -759,7 +759,7 @@ public class SpatialProcedures {
                 // Re-index using inner transactions (using the security context of the outer thread)
                 rc = importer.reIndex(db, 10000, false);
             } catch (Exception e) {
-                log.log("Error running OSMImporter: " + e.getMessage());
+                log.error("Error running OSMImporter: " + e.getMessage());
                 this.e = e;
             }
         }

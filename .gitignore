@@ -9,7 +9,7 @@ benchmark
 *~
 \#*
 .gradle
-target
+target/
 /build
 *.swp
 .project
